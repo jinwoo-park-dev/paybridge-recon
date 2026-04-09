@@ -1,0 +1,12 @@
+.git
+.github
+.idea
+.gradle
+build
+out
+.env
+*.iml
+.DS_Store
+frontend/node_modules
+frontend/dist
+frontend/.vite

@@ -1,0 +1,40 @@
+# Gradle / Java build output
+.gradle/
+build/
+out/
+logs/
+*.log
+*.hprof
+hs_err_pid*
+replay_pid*
+
+# Local environment / secrets
+.env
+.env.*
+!.env.example
+
+# IDE / editor
+*.iml
+.idea/
+.vscode/
+.run/
+
+# Frontend / Node / Vite
+node_modules/
+frontend/dist/
+frontend/.vite/
+coverage/
+frontend/coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Patch leftovers
+*.orig
+*.rej
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
