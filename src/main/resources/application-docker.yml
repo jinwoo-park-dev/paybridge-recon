@@ -1,0 +1,26 @@
+spring:
+  datasource:
+    url: ${PAYBRIDGE_RECON_DB_URL:jdbc:postgresql://postgres:5432/paybridge_recon}
+    username: ${PAYBRIDGE_RECON_DB_USERNAME:paybridge_recon}
+    password: ${PAYBRIDGE_RECON_DB_PASSWORD:paybridge_recon}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: false
+  flyway:
+    clean-disabled: true
+
+springdoc:
+  swagger-ui:
+    enabled: true
+  api-docs:
+    enabled: true
+
+paybridge-recon:
+  security:
+    operator-username: ${PAYBRIDGE_RECON_OPERATOR_USERNAME:operator}
+    operator-password: ${PAYBRIDGE_RECON_OPERATOR_PASSWORD:operator-change-me}
+  integration:
+    paybridge:
+      base-url: ${PAYBRIDGE_BASE_URL:http://host.docker.internal:8080}
+      operator-username: ${PAYBRIDGE_OPERATOR_USERNAME:operator}
+      operator-password: ${PAYBRIDGE_OPERATOR_PASSWORD:operator-change-me}

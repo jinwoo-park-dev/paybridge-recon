@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    url: ${PAYBRIDGE_RECON_DB_URL}
+    username: ${PAYBRIDGE_RECON_DB_USERNAME}
+    password: ${PAYBRIDGE_RECON_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  thymeleaf:
+    cache: true
+  jpa:
+    show-sql: false
+  flyway:
+    clean-disabled: true
+
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+
+paybridge-recon:
+  security:
+    operator-username: ${PAYBRIDGE_RECON_OPERATOR_USERNAME}
+    operator-password: ${PAYBRIDGE_RECON_OPERATOR_PASSWORD}
+  integration:
+    paybridge:
+      base-url: ${PAYBRIDGE_BASE_URL}
+      operator-username: ${PAYBRIDGE_OPERATOR_USERNAME}
+      operator-password: ${PAYBRIDGE_OPERATOR_PASSWORD}

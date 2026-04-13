@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: paybridge-recon-postgres
+    environment:
+      POSTGRES_DB: ${PAYBRIDGE_RECON_DB_NAME:-paybridge_recon}
+      POSTGRES_USER: ${PAYBRIDGE_RECON_DB_USERNAME:-paybridge_recon}
+      POSTGRES_PASSWORD: ${PAYBRIDGE_RECON_DB_PASSWORD:-paybridge_recon}
+    ports:
+      - "5433:5432"
+    volumes:
+      - paybridge-recon-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PAYBRIDGE_RECON_DB_USERNAME:-paybridge_recon} -d ${PAYBRIDGE_RECON_DB_NAME:-paybridge_recon}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  paybridge-recon:
+    profiles: ["full"]
+    build:
+      context: .
+    container_name: paybridge-recon-app
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      PAYBRIDGE_RECON_DB_URL: jdbc:postgresql://postgres:5432/${PAYBRIDGE_RECON_DB_NAME:-paybridge_recon}
+      PAYBRIDGE_RECON_DB_USERNAME: ${PAYBRIDGE_RECON_DB_USERNAME:-paybridge_recon}
+      PAYBRIDGE_RECON_DB_PASSWORD: ${PAYBRIDGE_RECON_DB_PASSWORD:-paybridge_recon}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+
+volumes:
+  paybridge-recon-postgres-data:
