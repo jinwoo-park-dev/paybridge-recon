@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settlement Imports</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <div class="eyebrow">PayBridge Recon</div>
+    <h1>Settlement Imports</h1>
+  </div>
+  <nav>
+    <a th:href="@{/}">Overview</a>
+    <a th:href="@{/imports}" class="active">Imports</a>
+    <a th:href="@{/runs/new}">Runs</a>
+    <a th:href="@{/workbench/cases}">Workbench</a>
+    <a th:href="@{/system}">System</a>
+    <form method="post" th:action="@{/operator/logout}" class="inline-form">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <button class="link-button" type="submit">Sign out</button>
+    </form>
+  </nav>
+</header>
+
+<main class="container">
+  <section class="card">
+    <div class="section-header">
+      <div>
+        <h2>Upload a normalized settlement CSV</h2>
+        <p class="muted">Every upload creates one batch row plus one normalized settlement row per CSV line. The checked-in sample validates the CSV shape, but discrepancy cases only appear when the imported rows overlap with your local PayBridge export data.</p>
+      </div>
+      <a th:href="@{/samples/settlement-sample.csv}">Format sample CSV</a>
+    </div>
+
+    <div class="alert success" th:if="${successMessage}" th:text="${successMessage}">Import completed.</div>
+    <div class="alert error" th:if="${errorMessage}" th:text="${errorMessage}">Import failed.</div>
+
+    <form method="post" enctype="multipart/form-data" th:action="@{/imports}" class="stack">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <label>
+        <span>Settlement file</span>
+        <input type="file" name="file" accept=".csv,text/csv" required>
+      </label>
+      <button type="submit">Import CSV</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Expected columns</h2>
+    <code>provider,order_id,provider_payment_id,provider_transaction_id,amount_minor,currency,settled_at</code>
+    <p class="muted">Amounts must be whole-number minor units, and <code>settled_at</code> must be an ISO-8601 timestamp like <code>2025-01-15T12:30:00Z</code>.</p>
+  </section>
+
+  <section class="card">
+    <div class="section-header">
+      <h2>Recent batches</h2>
+      <a th:href="@{/runs/new}">Use a batch in a run</a>
+    </div>
+    <div class="empty-state" th:if="${#lists.isEmpty(recentBatches)}">No batches imported yet.</div>
+    <div class="table-shell" th:if="${!#lists.isEmpty(recentBatches)}">
+      <table class="data-table data-table--wide">
+      <thead>
+      <tr>
+        <th>Uploaded At</th>
+        <th>Filename</th>
+        <th>Rows</th>
+        <th>Status</th>
+        <th>Uploaded By</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="batch : ${recentBatches}">
+        <td th:text="${#temporals.format(batch.uploadedAt, 'yyyy-MM-dd HH:mm:ss')}">2025-01-15 09:00:00</td>
+        <td th:text="${batch.filename}">settlement.csv</td>
+        <td th:text="${batch.rowCount}">3</td>
+        <td><span class="badge" th:text="${batch.status}">UPLOADED</span></td>
+        <td th:text="${batch.uploadedBy}">operator</td>
+      </tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+</main>
+</body>
+</html>

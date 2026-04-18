@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <div class="eyebrow">PayBridge Recon</div>
+    <h1>System &amp; Connectivity</h1>
+  </div>
+  <nav>
+    <a th:href="@{/}">Overview</a>
+    <a th:href="@{/imports}">Imports</a>
+    <a th:href="@{/runs/new}">Runs</a>
+    <a th:href="@{/workbench/cases}">Workbench</a>
+    <a th:href="@{/system}" class="active">System</a>
+    <form method="post" th:action="@{/operator/logout}" class="inline-form">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <button class="link-button" type="submit">Sign out</button>
+    </form>
+  </nav>
+</header>
+
+<main class="container">
+  <section class="cards two">
+    <article class="card">
+      <h2>Local runtime metadata</h2>
+      <dl class="key-value">
+        <div><dt>Service</dt><dd th:text="${systemInfo.service}">paybridge-recon</dd></div>
+        <div><dt>Project</dt><dd th:text="${systemInfo.project}">PayBridge Recon</dd></div>
+        <div><dt>Release</dt><dd th:text="${systemInfo.releaseVersion}">0.1.0</dd></div>
+        <div><dt>UI strategy</dt><dd th:text="${systemInfo.frontendChoice}">Server rendered</dd></div>
+        <div><dt>Architecture</dt><dd th:text="${systemInfo.architectureStyle}">Companion reconciliation service</dd></div>
+        <div><dt>Active profiles</dt><dd th:text="${#strings.listJoin(systemInfo.activeProfiles, ', ')}">local</dd></div>
+      </dl>
+    </article>
+
+    <article class="card">
+      <h2>Upstream PayBridge status</h2>
+      <div class="metric" th:text="${payBridgeConnection.connected} ? 'Connected' : 'Unavailable'">Connected</div>
+      <p class="muted">Checked at <span th:text="${#temporals.format(payBridgeConnection.checkedAt, 'yyyy-MM-dd HH:mm:ss')}">2025-01-15 09:00:00</span></p>
+      <dl class="key-value" th:if="${payBridgeConnection.connected and payBridgeConnection.systemInfo != null}">
+        <div><dt>Project</dt><dd th:text="${payBridgeConnection.systemInfo.project}">PayBridge</dd></div>
+        <div><dt>Release</dt><dd th:text="${payBridgeConnection.systemInfo.releaseVersion}">0.1.0</dd></div>
+        <div><dt>Operator API</dt><dd th:text="${payBridgeConnection.systemInfo.operatorApiEnabled}">true</dd></div>
+        <div><dt>Active profiles</dt><dd th:text="${#strings.listJoin(payBridgeConnection.systemInfo.activeProfiles, ', ')}">local</dd></div>
+        <div><dt>Correlation ID</dt><dd class="mono" th:text="${payBridgeConnection.correlationId}">corr-id</dd></div>
+      </dl>
+      <div class="alert error" th:if="${!payBridgeConnection.connected}" th:text="${payBridgeConnection.errorSummary}">Connection error</div>
+    </article>
+  </section>
+
+  <section class="card">
+    <h2>What this page confirms</h2>
+    <ul>
+      <li>PayBridge snapshot export is consumed server-to-server, not from the browser.</li>
+      <li>Reconciliation runs persist local snapshots and discrepancy cases.</li>
+      <li>Case detail can aggregate local recon data with upstream PayBridge detail, audit, and outbox context.</li>
+      <li>Operator pages and the workbench share one local demo operator session boundary.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

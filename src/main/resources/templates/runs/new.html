@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Recon Run</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <div class="eyebrow">PayBridge Recon</div>
+    <h1>Manual Reconciliation Runs</h1>
+  </div>
+  <nav>
+    <a th:href="@{/}">Overview</a>
+    <a th:href="@{/imports}">Imports</a>
+    <a th:href="@{/runs/new}" class="active">Runs</a>
+    <a th:href="@{/workbench/cases}">Workbench</a>
+    <a th:href="@{/system}">System</a>
+    <form method="post" th:action="@{/operator/logout}" class="inline-form">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <button class="link-button" type="submit">Sign out</button>
+    </form>
+  </nav>
+</header>
+
+<main class="container">
+  <section class="card">
+    <div class="section-header">
+      <div>
+        <h2>Create a manual run</h2>
+        <p class="muted">Pick one imported settlement batch and optionally constrain the PayBridge export by approved time window.</p>
+      </div>
+      <a th:href="@{/workbench/cases}">Open workbench</a>
+    </div>
+
+    <div class="alert success" th:if="${successMessage}" th:text="${successMessage}">Run created.</div>
+    <div class="alert error" th:if="${errorMessage}" th:text="${errorMessage}">Run failed.</div>
+
+    <form method="post" th:action="@{/runs}" class="stack">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <label>
+        <span>Settlement batch</span>
+        <select name="batchId" required>
+          <option value="">Select a batch</option>
+            <option th:each="batch : ${recentBatches}"
+                    th:value="${batch.batchId}"
+                    th:text="${batch.filename + ' — ' + batch.rowCount + ' rows — ' + #temporals.format(batch.uploadedAt, 'yyyy-MM-dd HH:mm:ss')}">
+                settlement.csv
+            </option>
+        </select>
+      </label>
+
+      <div class="grid two">
+        <label>
+          <span>Approved from (optional, UTC)</span>
+          <input type="text" name="approvedFrom" placeholder="2025-01-15T00:00:00Z">
+        </label>
+        <label>
+          <span>Approved to (optional, UTC)</span>
+          <input type="text" name="approvedTo" placeholder="2025-01-16T00:00:00Z">
+        </label>
+      </div>
+
+      <button type="submit">Run reconciliation</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>What the run does</h2>
+    <ol>
+      <li>Pulls machine-readable PayBridge snapshots from <code>/api/ops/transactions/export</code>.</li>
+      <li>Stores local snapshot rows for the run.</li>
+      <li>Matches settlement rows by provider payment ID, provider transaction ID, then order ID.</li>
+      <li>Creates <code>SETTLEMENT_ONLY</code>, <code>PAYBRIDGE_ONLY</code>, <code>AMOUNT_MISMATCH</code>, and <code>DUPLICATE_SETTLEMENT_ROW</code> cases.</li>
+    </ol>
+  </section>
+
+  <section class="card">
+    <h2>Recent runs</h2>
+    <div class="empty-state" th:if="${#lists.isEmpty(recentRuns)}">No recon runs yet.</div>
+    <div class="table-shell" th:if="${!#lists.isEmpty(recentRuns)}">
+      <table class="data-table data-table--wide">
+      <thead>
+      <tr>
+        <th>Started</th>
+        <th>Batch</th>
+        <th>Status</th>
+        <th>PayBridge Rows</th>
+        <th>Cases</th>
+        <th>Open</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="run : ${recentRuns}">
+        <td th:text="${#temporals.format(run.startedAt, 'yyyy-MM-dd HH:mm:ss')}">2025-01-15 09:00:00</td>
+        <td th:text="${run.batchFilename}">settlement.csv</td>
+        <td><span class="badge" th:text="${run.status}">COMPLETED</span></td>
+        <td th:text="${run.paybridgeRowCount}">4</td>
+        <td th:text="${run.caseCount}">2</td>
+        <td><a th:href="@{/workbench/cases(runId=${run.runId})}">View cases</a></td>
+      </tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+</main>
+</body>
+</html>

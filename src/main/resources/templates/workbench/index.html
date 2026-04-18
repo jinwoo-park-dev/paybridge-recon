@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recon Workbench</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@19.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@19.2.0/client"
+      }
+    }
+  </script>
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <div class="eyebrow">PayBridge Recon</div>
+    <h1>Case Workbench</h1>
+  </div>
+  <nav>
+    <a th:href="@{/}">Overview</a>
+    <a th:href="@{/imports}">Imports</a>
+    <a th:href="@{/runs/new}">Runs</a>
+    <a th:href="@{/workbench/cases}" class="active">Workbench</a>
+    <a th:href="@{/system}">System</a>
+    <form method="post" th:action="@{/operator/logout}" class="inline-form">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <button class="link-button" type="submit">Sign out</button>
+    </form>
+  </nav>
+</header>
+
+<main class="container">
+  <section class="card">
+    <div class="section-header">
+      <div>
+        <div class="eyebrow">Operator workflow</div>
+        <h2>Case queue and compare view</h2>
+        <p class="muted">
+          The browser stays on same-origin <code>paybridge-recon</code> APIs while the backend continues to call PayBridge server-to-server.
+          Imports, runs, and system inspection remain server-rendered. The interactive surface is limited to queue filtering, case detail,
+          and local note/status workflows.
+        </p>
+      </div>
+      <div class="actions-row">
+        <a class="button secondary" th:href="@{/imports}">Import CSV</a>
+        <a class="button secondary" th:href="@{/runs/new}">Start manual run</a>
+      </div>
+    </div>
+  </section>
+
+  <div id="recon-workbench-root" class="react-workbench-root">
+    <section class="card">
+      <div class="section-header compact">
+        <div>
+          <h2>Loading workbench</h2>
+          <p class="muted">Fetching operator bootstrap metadata, the case queue, and the selected case detail.</p>
+        </div>
+      </div>
+      <div class="empty-state">Loading the queue and compare panel…</div>
+    </section>
+  </div>
+
+  <noscript>
+    <section class="card">
+      <div class="alert error" style="margin-bottom: 0;">
+        This page needs JavaScript to render the interactive case workbench. The backend flows still work without it: you can import CSV files,
+        start manual runs, and inspect runtime metadata from the other operator pages.
+      </div>
+    </section>
+  </noscript>
+</main>
+
+<script type="module" th:src="@{/workbench/main.js}"></script>
+</body>
+</html>

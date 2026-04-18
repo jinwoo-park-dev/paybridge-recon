@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PayBridge Recon Login</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="auth-page">
+<div class="auth-card">
+  <div class="eyebrow">PayBridge Recon</div>
+  <h1>Operator Sign In</h1>
+  <p class="muted">Use the local demo operator account to import settlement files, start manual runs, and review discrepancy cases.</p>
+  <div class="alert success" th:if="${param.logout}">You have been signed out.</div>
+  <div class="alert error" th:if="${param.error}">Sign-in failed. Check your operator credentials.</div>
+  <form method="post" th:action="@{/operator/login}" class="stack">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+    <label>
+      <span>Username</span>
+      <input type="text" name="username" autocomplete="username" required>
+    </label>
+    <label>
+      <span>Password</span>
+      <input type="password" name="password" autocomplete="current-password" required>
+    </label>
+    <button type="submit">Sign In</button>
+  </form>
+  <div class="footnote">Default local demo credentials come from <code>.env.example</code>.</div>
+</div>
+</body>
+</html>

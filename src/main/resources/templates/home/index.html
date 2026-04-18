@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PayBridge Recon</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <div class="eyebrow">PayBridge Recon</div>
+    <h1>Settlement &amp; Reconciliation Workbench</h1>
+  </div>
+  <nav>
+    <a th:href="@{/}" class="active">Overview</a>
+    <a th:href="@{/imports}">Imports</a>
+    <a th:href="@{/runs/new}">Runs</a>
+    <a th:href="@{/workbench/cases}">Workbench</a>
+    <a th:href="@{/system}">System</a>
+    <form method="post" th:action="@{/operator/logout}" class="inline-form">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <button class="link-button" type="submit">Sign out</button>
+    </form>
+  </nav>
+</header>
+
+<main class="container">
+  <section class="hero-banner">
+    <p class="hero-banner__eyebrow">PayBridge Recon</p>
+    <h2 class="hero-banner__title">Import, compare, and triage</h2>
+    <p class="hero-banner__subtitle">Manual settlement comparison for a PayBridge companion workbench</p>
+    <p class="hero-banner__copy">
+      Import a normalized settlement file, capture one PayBridge snapshot set for the selected comparison window,
+      and review discrepancy cases without sending repair commands back into the payment system.
+    </p>
+    <div class="hero-banner__badges">
+      <span class="hero-pill">Backend: <strong>Java 21 · Spring Boot 3</strong></span>
+      <span class="hero-pill">UI: <strong th:text="${systemInfo.frontendChoice}">Spring MVC pages plus a focused React case workbench</strong></span>
+      <span class="hero-pill">Architecture: <strong th:text="${systemInfo.architectureStyle}">Companion reconciliation service</strong></span>
+      <span class="hero-pill">Scope: <strong>Manual import · Manual run · Local case triage</strong></span>
+    </div>
+  </section>
+
+  <section class="hero-metrics">
+    <article class="hero-metric-card">
+      <span class="hero-metric-card__label">PayBridge connection</span>
+      <strong class="hero-metric-card__value" th:text="${payBridgeConnection.connected} ? 'Connected' : 'Unavailable'">Connected</strong>
+      <p class="hero-metric-card__copy" th:if="${payBridgeConnection.connected and payBridgeConnection.systemInfo != null}">
+        Upstream: <span th:text="${payBridgeConnection.systemInfo.project}">PayBridge</span>
+      </p>
+      <p class="hero-metric-card__copy" th:if="${!payBridgeConnection.connected}" th:text="${payBridgeConnection.errorSummary}">Connection error</p>
+    </article>
+    <article class="hero-metric-card">
+      <span class="hero-metric-card__label">Case workbench</span>
+      <strong class="hero-metric-card__value">Focused case review</strong>
+      <p class="hero-metric-card__copy">Queue, compare view, local notes, and local status transitions all stay on same-origin Recon APIs.</p>
+    </article>
+  </section>
+
+  <section class="cards three">
+    <article class="card">
+      <h3>1. Import settlement CSV</h3>
+      <p>Upload a normalized settlement file and store every row with batch provenance.</p>
+      <a class="button secondary" th:href="@{/imports}">Open imports</a>
+    </article>
+    <article class="card">
+      <h3>2. Start a recon run</h3>
+      <p>Select a settlement batch, add an optional approved time window, and pull upstream PayBridge snapshots.</p>
+      <a class="button secondary" th:href="@{/runs/new}">Open run form</a>
+    </article>
+    <article class="card">
+      <h3>3. Review cases</h3>
+      <p>Inspect discrepancy cases, change status, and leave operator notes in the case workbench.</p>
+      <a class="button secondary" th:href="@{/workbench/cases}">Open workbench</a>
+    </article>
+  </section>
+
+  <section class="home-history stack-lg">
+    <article class="card">
+      <div class="section-header section-header--stacked">
+        <div>
+          <h2>Recent import batches</h2>
+          <p class="section-copy">Showing the latest 3 uploads on the overview page. Open Imports to see more and upload another file.</p>
+        </div>
+        <a th:href="@{/imports}">See all imports</a>
+      </div>
+      <div class="empty-state" th:if="${#lists.isEmpty(recentBatches)}">No settlement batches have been uploaded yet.</div>
+      <div class="table-shell" th:if="${!#lists.isEmpty(recentBatches)}">
+        <table class="data-table data-table--wide">
+          <thead>
+          <tr>
+            <th>Uploaded At</th>
+            <th>Filename</th>
+            <th>Rows</th>
+            <th>Status</th>
+            <th>Uploaded By</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="batch : ${recentBatches}">
+            <td th:text="${#temporals.format(batch.uploadedAt, 'yyyy-MM-dd HH:mm:ss')}">2025-01-15 09:00:00</td>
+            <td th:text="${batch.filename}">settlement.csv</td>
+            <td th:text="${batch.rowCount}">3</td>
+            <td><span class="badge" th:text="${batch.status}">UPLOADED</span></td>
+            <td th:text="${batch.uploadedBy}">operator</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="section-header section-header--stacked">
+        <div>
+          <h2>Recent recon runs</h2>
+          <p class="section-copy">Showing the latest 3 runs on the overview page. Open Runs to review more history or create another manual run.</p>
+        </div>
+        <a th:href="@{/runs/new}">Show more runs</a>
+      </div>
+      <div class="empty-state" th:if="${#lists.isEmpty(recentRuns)}">No reconciliation runs have been created yet.</div>
+      <div class="table-shell" th:if="${!#lists.isEmpty(recentRuns)}">
+        <table class="data-table data-table--wide">
+          <thead>
+          <tr>
+            <th>Started</th>
+            <th>Batch</th>
+            <th>Status</th>
+            <th>Cases</th>
+            <th>Open</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="run : ${recentRuns}">
+            <td th:text="${#temporals.format(run.startedAt, 'yyyy-MM-dd HH:mm:ss')}">2025-01-15 09:00:00</td>
+            <td th:text="${run.batchFilename}">settlement.csv</td>
+            <td><span class="badge" th:text="${run.status}">COMPLETED</span></td>
+            <td th:text="${run.caseCount}">2</td>
+            <td><a th:href="@{/workbench/cases(runId=${run.runId})}">View cases</a></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+</main>
+</body>
+</html>
