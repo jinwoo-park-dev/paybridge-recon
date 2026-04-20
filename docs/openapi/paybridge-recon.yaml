@@ -1,0 +1,754 @@
+openapi: 3.1.0
+info:
+  title: PayBridge Recon JSON API
+  version: 0.1.0
+  description: |
+    Checked in reference for the JSON APIs in PayBridge Recon.
+
+    This file intentionally focuses on JSON endpoints that are useful during
+    code review and local verification:
+    - system metadata
+    - workbench bootstrap
+    - reconciliation run creation
+    - case queue and detail APIs
+    - local case status and note mutation APIs
+
+    Server-rendered HTML routes under `/`, `/operator/*`, `/imports`,
+    `/runs/*`, `/workbench/*`, and `/system` are intentionally excluded.
+servers:
+  - url: http://localhost:8081
+tags:
+  - name: System
+    description: Runtime metadata and small environment-verification endpoints.
+  - name: Workbench
+    description: Same-origin bootstrap and case review APIs used by the case workbench.
+  - name: Runs
+    description: Manual reconciliation run creation.
+paths:
+  /api/system/info:
+    get:
+      tags: [System]
+      summary: Get service metadata
+      operationId: getSystemInfo
+      responses:
+        '200':
+          description: Service metadata returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemInfoResponse'
+
+  /api/recon/workbench/bootstrap:
+    get:
+      tags: [Workbench]
+      summary: Get workbench bootstrap metadata
+      operationId: getWorkbenchBootstrap
+      security:
+        - sessionCookieAuth: []
+      responses:
+        '200':
+          description: Bootstrap metadata returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkbenchBootstrapResponse'
+        '401':
+          description: Operator authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+
+  /api/recon/runs:
+    post:
+      tags: [Runs]
+      summary: Create a manual reconciliation run
+      operationId: createReconRun
+      security:
+        - sessionCookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReconRunCreateRequest'
+      responses:
+        '200':
+          description: Run created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReconRunSummaryView'
+        '400':
+          description: Request validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '401':
+          description: Operator authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+
+  /api/recon/cases:
+    get:
+      tags: [Workbench]
+      summary: List discrepancy cases
+      operationId: listReconCases
+      security:
+        - sessionCookieAuth: []
+      parameters:
+        - in: query
+          name: runId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: caseStatus
+          schema:
+            $ref: '#/components/schemas/ReconCaseStatus'
+        - in: query
+          name: caseType
+          schema:
+            $ref: '#/components/schemas/ReconCaseType'
+        - in: query
+          name: provider
+          schema:
+            type: string
+        - in: query
+          name: q
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Case queue returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReconCaseListView'
+        '401':
+          description: Operator authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+
+  /api/recon/cases/{caseId}:
+    get:
+      tags: [Workbench]
+      summary: Get one discrepancy case detail
+      operationId: getReconCaseDetail
+      security:
+        - sessionCookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+      responses:
+        '200':
+          description: Case detail returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReconCaseDetailView'
+        '400':
+          description: The requested case id was invalid or not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '401':
+          description: Operator authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+
+  /api/recon/cases/{caseId}/status:
+    patch:
+      tags: [Workbench]
+      summary: Update a case status
+      operationId: updateReconCaseStatus
+      security:
+        - sessionCookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+        - in: header
+          name: X-CSRF-TOKEN
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReconCaseStatusUpdateRequest'
+      responses:
+        '200':
+          description: Case status updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReconCaseStatusUpdateView'
+        '400':
+          description: Request validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '401':
+          description: Operator authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+
+  /api/recon/cases/{caseId}/notes:
+    post:
+      tags: [Workbench]
+      summary: Add a case note
+      operationId: createReconCaseNote
+      security:
+        - sessionCookieAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CaseId'
+        - in: header
+          name: X-CSRF-TOKEN
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReconCaseNoteCreateRequest'
+      responses:
+        '200':
+          description: Case note created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReconCaseNoteView'
+        '400':
+          description: Request validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '401':
+          description: Operator authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+
+components:
+  securitySchemes:
+    sessionCookieAuth:
+      type: apiKey
+      in: cookie
+      name: JSESSIONID
+
+  parameters:
+    CaseId:
+      in: path
+      name: caseId
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    ApiErrorResponse:
+      type: object
+      required: [status, error, message, timestamp]
+      properties:
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    SystemInfoResponse:
+      type: object
+      required: [service, project, releaseVersion, frontendChoice, architectureStyle, reactWorkbenchEnabled, activeProfiles]
+      properties:
+        service:
+          type: string
+          example: paybridge-recon
+        project:
+          type: string
+          example: PayBridge Recon — Settlement & Reconciliation Workbench
+        releaseVersion:
+          type: string
+          example: 0.1.0
+        frontendChoice:
+          type: string
+          example: Spring MVC pages for imports, runs, and system plus a focused React case workbench
+        architectureStyle:
+          type: string
+          example: Companion reconciliation service
+        reactWorkbenchEnabled:
+          type: boolean
+        activeProfiles:
+          type: array
+          items:
+            type: string
+
+    ReconRunStatus:
+      type: string
+      enum: [RUNNING, COMPLETED, FAILED]
+
+    ReconCaseStatus:
+      type: string
+      enum: [OPEN, IN_REVIEW, RESOLVED, IGNORED]
+
+    ReconCaseType:
+      type: string
+      enum: [SETTLEMENT_ONLY, PAYBRIDGE_ONLY, AMOUNT_MISMATCH, DUPLICATE_SETTLEMENT_ROW]
+
+    ReconRunCreateRequest:
+      type: object
+      required: [batchId]
+      properties:
+        batchId:
+          type: string
+          format: uuid
+        approvedFrom:
+          type: string
+          format: date-time
+          nullable: true
+        approvedTo:
+          type: string
+          format: date-time
+          nullable: true
+
+    ReconRunSummaryView:
+      type: object
+      required: [runId, batchId, batchFilename, status, settlementRowCount, paybridgeRowCount, caseCount, startedAt]
+      properties:
+        runId:
+          type: string
+          format: uuid
+        batchId:
+          type: string
+          format: uuid
+        batchFilename:
+          type: string
+        status:
+          $ref: '#/components/schemas/ReconRunStatus'
+        settlementRowCount:
+          type: integer
+        paybridgeRowCount:
+          type: integer
+        caseCount:
+          type: integer
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        errorSummary:
+          type: string
+          nullable: true
+
+    WorkbenchBootstrapResponse:
+      type: object
+      required: [operatorName, csrfHeaderName, csrfToken, recentRuns, caseStatuses, caseTypes]
+      properties:
+        operatorName:
+          type: string
+        csrfHeaderName:
+          type: string
+          example: X-CSRF-TOKEN
+        csrfToken:
+          type: string
+        recentRuns:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReconRunSummaryView'
+        caseStatuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReconCaseStatus'
+        caseTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReconCaseType'
+
+    ReconCaseQueueItemView:
+      type: object
+      required: [caseId, runId, caseType, caseStatus, summary, openedAt]
+      properties:
+        caseId:
+          type: string
+          format: uuid
+        runId:
+          type: string
+          format: uuid
+        caseType:
+          $ref: '#/components/schemas/ReconCaseType'
+        caseStatus:
+          $ref: '#/components/schemas/ReconCaseStatus'
+        provider:
+          type: string
+          nullable: true
+        summary:
+          type: string
+        matchKey:
+          type: string
+          nullable: true
+        paymentId:
+          type: string
+          format: uuid
+          nullable: true
+        settlementRowId:
+          type: string
+          format: uuid
+          nullable: true
+        openedAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    ReconCaseListView:
+      type: object
+      required: [cases, totalCount]
+      properties:
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReconCaseQueueItemView'
+        totalCount:
+          type: integer
+
+    SettlementRowDetailView:
+      type: object
+      required: [settlementRowId, rowNumber, amountMinor]
+      properties:
+        settlementRowId:
+          type: string
+          format: uuid
+        rowNumber:
+          type: integer
+        provider:
+          type: string
+          nullable: true
+        orderId:
+          type: string
+          nullable: true
+        providerPaymentId:
+          type: string
+          nullable: true
+        providerTransactionId:
+          type: string
+          nullable: true
+        amountMinor:
+          type: integer
+        currency:
+          type: string
+          nullable: true
+        settledAt:
+          type: string
+          format: date-time
+          nullable: true
+        rawRowJson:
+          type: string
+          nullable: true
+
+    PayBridgeSnapshotDetailView:
+      type: object
+      required: [paymentId, amountMinor, reversibleAmountMinor]
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          nullable: true
+        provider:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        amountMinor:
+          type: integer
+        reversibleAmountMinor:
+          type: integer
+        currency:
+          type: string
+          nullable: true
+        providerPaymentId:
+          type: string
+          nullable: true
+        providerTransactionId:
+          type: string
+          nullable: true
+        approvedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    PayBridgePaymentReversalView:
+      type: object
+      required: [reversalId, reversalType, status, amountDisplay]
+      properties:
+        reversalId:
+          type: string
+          format: uuid
+        reversalType:
+          type: string
+        status:
+          type: string
+        amountDisplay:
+          type: string
+        remainingAmountDisplay:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        providerReversalId:
+          type: string
+          nullable: true
+        processedAtDisplay:
+          type: string
+          nullable: true
+
+    PayBridgePaymentDetailView:
+      type: object
+      required: [paymentId, amountDisplay, reversibleAmountDisplay, fullReversalAllowed, partialReversalAllowed, reversals]
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          nullable: true
+        provider:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        amountDisplay:
+          type: string
+        reversibleAmountDisplay:
+          type: string
+        currency:
+          type: string
+          nullable: true
+        providerPaymentId:
+          type: string
+          nullable: true
+        providerTransactionId:
+          type: string
+          nullable: true
+        approvedAtDisplay:
+          type: string
+          nullable: true
+        fullReversalAllowed:
+          type: boolean
+        partialReversalAllowed:
+          type: boolean
+        reversals:
+          type: array
+          items:
+            $ref: '#/components/schemas/PayBridgePaymentReversalView'
+
+    PayBridgeAuditLogView:
+      type: object
+      required: [id, action, outcome]
+      properties:
+        id:
+          type: string
+          format: uuid
+        action:
+          type: string
+        outcome:
+          type: string
+        resourceType:
+          type: string
+          nullable: true
+        resourceId:
+          type: string
+          nullable: true
+        provider:
+          type: string
+          nullable: true
+        actorType:
+          type: string
+          nullable: true
+        correlationId:
+          type: string
+          nullable: true
+        message:
+          type: string
+          nullable: true
+        detailJson:
+          type: string
+          nullable: true
+        occurredAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    PayBridgeOutboxEventView:
+      type: object
+      required: [id, eventType, status, retryCount]
+      properties:
+        id:
+          type: string
+          format: uuid
+        aggregateType:
+          type: string
+          nullable: true
+        aggregateId:
+          type: string
+          nullable: true
+        eventType:
+          type: string
+        status:
+          type: string
+        retryCount:
+          type: integer
+        availableAt:
+          type: string
+          format: date-time
+          nullable: true
+        publishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastError:
+          type: string
+          nullable: true
+        payloadJson:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    PayBridgePaymentContextView:
+      type: object
+      required: [auditLogs, outboxEvents]
+      properties:
+        paymentDetail:
+          $ref: '#/components/schemas/PayBridgePaymentDetailView'
+        auditLogs:
+          type: array
+          items:
+            $ref: '#/components/schemas/PayBridgeAuditLogView'
+        outboxEvents:
+          type: array
+          items:
+            $ref: '#/components/schemas/PayBridgeOutboxEventView'
+        errorSummary:
+          type: string
+          nullable: true
+
+    ReconCaseNoteView:
+      type: object
+      required: [noteId, author, body, createdAt]
+      properties:
+        noteId:
+          type: string
+          format: uuid
+        author:
+          type: string
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    ReconCaseDetailView:
+      type: object
+      required: [caseId, runId, caseType, caseStatus, summary, openedAt, notes]
+      properties:
+        caseId:
+          type: string
+          format: uuid
+        runId:
+          type: string
+          format: uuid
+        caseType:
+          $ref: '#/components/schemas/ReconCaseType'
+        caseStatus:
+          $ref: '#/components/schemas/ReconCaseStatus'
+        provider:
+          type: string
+          nullable: true
+        summary:
+          type: string
+        matchKey:
+          type: string
+          nullable: true
+        openedAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+          nullable: true
+        settlementRow:
+          $ref: '#/components/schemas/SettlementRowDetailView'
+        payBridgeSnapshot:
+          $ref: '#/components/schemas/PayBridgeSnapshotDetailView'
+        payBridgeContext:
+          $ref: '#/components/schemas/PayBridgePaymentContextView'
+        notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReconCaseNoteView'
+
+    ReconCaseStatusUpdateRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/ReconCaseStatus'
+
+    ReconCaseStatusUpdateView:
+      type: object
+      required: [caseId, caseStatus]
+      properties:
+        caseId:
+          type: string
+          format: uuid
+        caseStatus:
+          $ref: '#/components/schemas/ReconCaseStatus'
+        resolvedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    ReconCaseNoteCreateRequest:
+      type: object
+      required: [body]
+      properties:
+        body:
+          type: string
+          maxLength: 2000

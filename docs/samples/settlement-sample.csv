@@ -1,0 +1,4 @@
+provider,order_id,provider_payment_id,provider_transaction_id,amount_minor,currency,settled_at
+STRIPE,ORD-2001,pi_123,ch_123,1999,USD,2025-01-15T12:30:00Z
+STRIPE,ORD-2002,pi_456,ch_456,2599,USD,2025-01-15T12:31:00Z
+NICEPAY,ORD-3001,cp_789,TID-1001,10004,KRW,2025-01-15T12:35:00Z
